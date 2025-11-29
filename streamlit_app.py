@@ -259,7 +259,7 @@ if uploaded is None:
         <div class="feature-card">
             <div class="feature-icon">⚡</div>
             <div class="feature-title">빠른 처리</div>
-            <div class="feature-desc">대량의 환자 데이터를 한 번에 업로드하여 즉시 결과를 확인할 수 있습니다</div>
+            <div class="feature-desc">환자 데이터를 업로드하여 즉시 결과를 확인할 수 있습니다</div>
         </div>
         """, unsafe_allow_html=True)
     
