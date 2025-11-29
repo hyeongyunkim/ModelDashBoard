@@ -329,30 +329,34 @@ with tab1:
                 plt.tight_layout()
                 st.pyplot(fig2)
             
-            # 두 번째 줄: Pie Chart + Scatter Plot
+            # 두 번째 줄: Bar Chart + Scatter Plot
             col1, col2 = st.columns(2)
             
             with col1:
-                # Risk Group 파이 차트
+                # Risk Group 막대 그래프
                 fig3, ax3 = plt.subplots(figsize=(8, 5))
                 risk_counts = result_df["Risk_Group"].value_counts()
-                colors_pie = ['#28a745', '#17a2b8', '#ffc107', '#fd7e14', '#dc3545']
                 
                 # Risk Group 순서대로 정렬
                 risk_counts = risk_counts.reindex(risk_order, fill_value=0)
                 
-                wedges, texts, autotexts = ax3.pie(risk_counts.values, 
-                                                     labels=risk_counts.index, 
-                                                     autopct='%1.1f%%',
-                                                     colors=colors_pie,
-                                                     startangle=90)
+                colors_bar = ['#28a745', '#17a2b8', '#ffc107', '#fd7e14', '#dc3545']
                 
-                for autotext in autotexts:
-                    autotext.set_color('white')
-                    autotext.set_fontweight('bold')
-                    autotext.set_fontsize(10)
-                
+                bars = ax3.bar(range(len(risk_counts)), risk_counts.values, color=colors_bar, edgecolor='white', linewidth=1.5)
+                ax3.set_xticks(range(len(risk_counts)))
+                ax3.set_xticklabels(risk_counts.index, rotation=45, ha='right', fontsize=9)
+                ax3.set_ylabel('Number of Patients', fontsize=11, fontweight='bold')
                 ax3.set_title('Risk Group Distribution', fontsize=13, fontweight='bold', pad=15)
+                ax3.grid(True, alpha=0.3, axis='y')
+                
+                # 막대 위에 숫자 표시
+                for i, (bar, count) in enumerate(zip(bars, risk_counts.values)):
+                    if count > 0:
+                        percentage = count / len(result_df) * 100
+                        ax3.text(bar.get_x() + bar.get_width()/2, bar.get_height() + max(risk_counts.values)*0.02, 
+                                f'{count}\n({percentage:.1f}%)',
+                                ha='center', va='bottom', fontsize=9, fontweight='bold')
+                
                 plt.tight_layout()
                 st.pyplot(fig3)
             
