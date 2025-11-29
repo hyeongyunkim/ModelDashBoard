@@ -7,7 +7,8 @@ import seaborn as sns
 from datetime import datetime
 from sklearn.preprocessing import StandardScaler
 
-from clinical_tab import render_clinical_tab  # 두 번째 탭 함수
+from clinical_tab import render_clinical_tab  # 두 번째 탭 렌더링 함수
+
 
 # -------------------------------------------------------
 # 페이지 설정
@@ -108,7 +109,6 @@ def load_model_and_features():
 
 
 model, feature_cols = load_model_and_features()
-
 if model is None or feature_cols is None:
     st.stop()
 
@@ -147,7 +147,6 @@ with tab1:
     )
 
     if uploaded is None:
-        # 업로드 안내 카드
         st.markdown(
             """
         <div class="upload-container">
@@ -229,10 +228,9 @@ with tab1:
                     if "Survival_Rate" in df.columns:
                         result_df["Survival_Rate"] = df["Survival_Rate"].astype(float)
                     else:
-                        # Risk_Score = 사망 확률 → 생존율(%) 계산
                         result_df["Survival_Rate"] = (
                             1 - result_df["Risk_Score"]
-                        ) * 100
+                        ) * 100  # 생존율(%)
 
                     return result_df
 
@@ -242,8 +240,7 @@ with tab1:
                 scaler = StandardScaler()
                 X_scaled = scaler.fit_transform(df)
 
-                # 0~1 사이의 사망 확률
-                risk = model.predict_proba(X_scaled)[:, 1]
+                risk = model.predict_proba(X_scaled)[:, 1]  # 사망 확률(0~1)
 
                 def get_risk_group(score: float) -> str:
                     if score < 0.2:
@@ -289,7 +286,7 @@ with tab1:
                     '<div class="stat-label">Total Patients</div>',
                     unsafe_allow_html=True,
                 )
-                st.markdown('</div>', unsafe_allow_html=True)
+                st.markdown("</div>", unsafe_allow_html=True)
 
             with c2:
                 high_risk = len(
@@ -301,15 +298,14 @@ with tab1:
                 )
                 st.markdown('<div class="stat-card">', unsafe_allow_html=True)
                 st.markdown(
-                    f'<div class="stat-number" style="color: #dc3545;">'
-                    f"{high_risk}</div>",
+                    f'<div class="stat-number" style="color: #dc3545;">{high_risk}</div>',
                     unsafe_allow_html=True,
                 )
                 st.markdown(
                     '<div class="stat-label">High Risk</div>',
                     unsafe_allow_html=True,
                 )
-                st.markdown('</div>', unsafe_allow_html=True)
+                st.markdown("</div>", unsafe_allow_html=True)
 
             with c3:
                 medium_risk = len(
@@ -317,15 +313,14 @@ with tab1:
                 )
                 st.markdown('<div class="stat-card">', unsafe_allow_html=True)
                 st.markdown(
-                    f'<div class="stat-number" style="color: #ffc107;">'
-                    f"{medium_risk}</div>",
+                    f'<div class="stat-number" style="color: #ffc107;">{medium_risk}</div>',
                     unsafe_allow_html=True,
                 )
                 st.markdown(
                     '<div class="stat-label">Medium Risk</div>',
                     unsafe_allow_html=True,
                 )
-                st.markdown('</div>', unsafe_allow_html=True)
+                st.markdown("</div>", unsafe_allow_html=True)
 
             with c4:
                 low_risk = len(
@@ -337,17 +332,16 @@ with tab1:
                 )
                 st.markdown('<div class="stat-card">', unsafe_allow_html=True)
                 st.markdown(
-                    f'<div class="stat-number" style="color: #28a745;">'
-                    f"{low_risk}</div>",
+                    f'<div class="stat-number" style="color: #28a745;">{low_risk}</div>',
                     unsafe_allow_html=True,
                 )
                 st.markdown(
                     '<div class="stat-label">Low Risk</div>',
                     unsafe_allow_html=True,
                 )
-                st.markdown('</div>', unsafe_allow_html=True)
+                st.markdown("</div>", unsafe_allow_html=True)
 
-            # --------- 결과 테이블 ---------
+            # --------- 전체 결과 테이블 ---------
             st.markdown("### 📋 Patient-wise Results")
 
             def color_risk_group(val: str) -> str:
@@ -448,16 +442,8 @@ with tab1:
                     ax=ax2,
                     palette="RdYlGn_r",
                 )
-                ax2.set_xlabel(
-                    "Risk Group",
-                    fontsize=11,
-                    fontweight="bold",
-                )
-                ax2.set_ylabel(
-                    "Risk Score",
-                    fontsize=11,
-                    fontweight="bold",
-                )
+                ax2.set_xlabel("Risk Group", fontsize=11, fontweight="bold")
+                ax2.set_ylabel("Risk Score", fontsize=11, fontweight="bold")
                 ax2.set_title(
                     "Risk Score by Risk Group",
                     fontsize=13,
@@ -580,29 +566,73 @@ with tab1:
                 plt.tight_layout()
                 st.pyplot(fig4)
 
-            # --------- 상위 10명 고위험 환자 ---------
-            st.markdown("### ⚠️ Top 10 High-Risk Patients")
+            # --------- 위험군별 환자 리스트 ---------
+            st.markdown("### ⚠️ Patient Lists by Risk Group")
 
-            top_risk = result_df.nlargest(
-                10,
-                "Risk_Score",
-            )[["Patient_ID", "Risk_Score", "Risk_Group", "Survival_Rate"]].copy()
-            top_risk["Rank"] = range(1, len(top_risk) + 1)
-            top_risk = top_risk[
-                ["Rank", "Patient_ID", "Risk_Score", "Survival_Rate", "Risk_Group"]
-            ]
-            top_risk["Risk_Score"] = top_risk["Risk_Score"].apply(
-                lambda x: f"{x:.3f}"
-            )
-            top_risk["Survival_Rate"] = top_risk["Survival_Rate"].apply(
-                lambda x: f"{x:.1f}%"
+            subtab1, subtab2, subtab3 = st.tabs(
+                [
+                    "🔴 High Risk Patients",
+                    "🟡 Medium Risk Patients",
+                    "🟢 Low Risk Patients",
+                ]
             )
 
-            st.dataframe(
-                top_risk,
-                use_container_width=True,
-                hide_index=True,
-            )
+            def format_patient_table(df_sub: pd.DataFrame) -> pd.DataFrame:
+                table = df_sub[
+                    ["Patient_ID", "Risk_Score", "Survival_Rate", "Risk_Group"]
+                ].copy()
+                table = table.sort_values("Risk_Score", ascending=False)
+                table["Risk_Score"] = table["Risk_Score"].apply(
+                    lambda x: f"{x:.3f}"
+                )
+                table["Survival_Rate"] = table["Survival_Rate"].apply(
+                    lambda x: f"{x:.1f}%"
+                )
+                return table
+
+            # 🔴 High Risk (High + Very High)
+            with subtab1:
+                high_df = result_df[
+                    result_df["Risk_Group"].isin(
+                        ["High Risk", "Very High Risk"]
+                    )
+                ]
+                if high_df.empty:
+                    st.info("현재 High / Very High Risk 환자가 없습니다.")
+                else:
+                    st.dataframe(
+                        format_patient_table(high_df),
+                        use_container_width=True,
+                        hide_index=True,
+                    )
+
+            # 🟡 Medium Risk
+            with subtab2:
+                med_df = result_df[result_df["Risk_Group"] == "Medium Risk"]
+                if med_df.empty:
+                    st.info("현재 Medium Risk 환자가 없습니다.")
+                else:
+                    st.dataframe(
+                        format_patient_table(med_df),
+                        use_container_width=True,
+                        hide_index=True,
+                    )
+
+            # 🟢 Low Risk (Low + Very Low)
+            with subtab3:
+                low_df = result_df[
+                    result_df["Risk_Group"].isin(
+                        ["Low Risk", "Very Low Risk"]
+                    )
+                ]
+                if low_df.empty:
+                    st.info("현재 Low / Very Low Risk 환자가 없습니다.")
+                else:
+                    st.dataframe(
+                        format_patient_table(low_df),
+                        use_container_width=True,
+                        hide_index=True,
+                    )
 
             # --------- 결과 다운로드 ---------
             st.markdown("### 💾 Download Results")
@@ -621,7 +651,7 @@ with tab1:
             st.info("Please check your CSV file format and try again.")
 
 # =======================================================
-# 탭 2: Clinical Interpretation (다른 파일에서 렌더링)
+# 탭 2: Clinical Interpretation
 # =======================================================
 with tab2:
     render_clinical_tab()
