@@ -7,28 +7,29 @@ from matplotlib.patches import Patch
 def render_clinical_tab() -> None:
     """Clinical Interpretation 탭을 렌더링하는 함수."""
 
+    # 섹션 타이틀 공통
     st.markdown(
         '<div class="section-title">📋 Understanding Your Results</div>',
         unsafe_allow_html=True,
     )
 
-    # ---------- Risk Score 설명 ----------
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown("### 🎯 What is Risk Score?")
+    # ---------- Risk Score 설명 (텍스트 + 카드 안에 다 넣음) ----------
     st.markdown(
         """
-**Risk Score**는 환자의 **2년 내 사망 확률**을 나타냅니다.
-
-- **0에 가까울수록**: 낮은 사망 위험 (높은 생존율)
-- **1에 가까울수록**: 높은 사망 위험 (낮은 생존율)
-
-이 점수는 200개의 핵심 유전자 발현 패턴을 예측 모델이 분석하여 계산됩니다.
-"""
+<div class="card">
+  <h3>🎯 What is Risk Score?</h3>
+  <p><b>Risk Score</b>는 환자의 <b>2년 내 사망 확률</b>을 나타냅니다.</p>
+  <ul>
+    <li><b>0에 가까울수록</b>: 낮은 사망 위험 (높은 생존율)</li>
+    <li><b>1에 가까울수록</b>: 높은 사망 위험 (낮은 생존율)</li>
+  </ul>
+  <p>이 점수는 200개의 핵심 유전자 발현 패턴을 예측 모델이 분석하여 계산됩니다.</p>
+</div>
+""",
+        unsafe_allow_html=True,
     )
-    st.markdown("</div>", unsafe_allow_html=True)
 
-    # ---------- Risk Group 설명 ----------
-    st.markdown('<div class="card">', unsafe_allow_html=True)
+    # ---------- Risk Group 설명 (표가 들어가서 카드 래퍼 제거) ----------
     st.markdown("### 🏥 Risk Group Classification")
     st.markdown("환자는 Risk Score를 기반으로 **5개의 위험군**으로 분류됩니다:")
 
@@ -70,10 +71,8 @@ def render_clinical_tab() -> None:
         use_container_width=True,
         hide_index=True,
     )
-    st.markdown("</div>", unsafe_allow_html=True)
 
-    # ---------- 모델 성능 ----------
-    st.markdown('<div class="card">', unsafe_allow_html=True)
+    # ---------- 모델 성능 (그래프 섹션: 카드 래퍼 제거) ----------
     st.markdown("### 📊 Model Performance Metrics")
 
     c1, c2 = st.columns([1, 1])
@@ -135,10 +134,7 @@ def render_clinical_tab() -> None:
 """
         )
 
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    # ---------- Decile 분석 ----------
-    st.markdown('<div class="card">', unsafe_allow_html=True)
+    # ---------- Decile 분석 (그래프 섹션) ----------
     st.markdown("### 📊 Decile Analysis Summary")
     st.markdown(
         "본 모델은 **독립 검증 데이터셋(TT3, n=214)**에서 뛰어난 성능을 입증했습니다."
@@ -208,10 +204,7 @@ def render_clinical_tab() -> None:
 """
         )
 
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    # ---------- Top 10 유전자 ----------
-    st.markdown('<div class="card">', unsafe_allow_html=True)
+    # ---------- Top 10 유전자 (그래프 섹션) ----------
     st.markdown("### 🧬 Top 10 Contributing Genes")
 
     c1, c2 = st.columns([2, 1])
@@ -317,55 +310,42 @@ def render_clinical_tab() -> None:
 """
         )
 
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    # ---------- 고위험군의 중요성 ----------
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown("### ⚠️ Why High-Risk Patients Matter")
+    # ---------- 고위험군의 중요성 (텍스트 카드) ----------
     st.markdown(
         """
-**고위험 환자 조기 식별**은 다발성 골수종 치료에서 매우 중요합니다:
-
-**1. 치료 강도 결정**  
-- 고위험 → 더 적극적인 초기 치료  
-- 저위험 → 부작용 최소화한 표준 치료  
-
-**2. 임상시험 참여**  
-- 고위험군 대상 신약 임상시험  
-- 맞춤형 치료법 개발  
-
-**3. 모니터링 주기**  
-- 고위험: 집중 추적 관찰  
-- 저위험: 정기 검진  
-
-**4. 예후 상담**  
-- 정확한 예후 정보 제공  
-- 치료 계획 수립 지원
-"""
-    )
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    # ---------- 임상 활용 ----------
-    st.markdown(
-        '<div class="card" style="background: #e8f4f3; border-left: 4px solid #2d5f5d;">',
+<div class="card">
+  <h3>⚠️ Why High-Risk Patients Matter</h3>
+  <p><b>고위험 환자 조기 식별</b>은 다발성 골수종 치료에서 매우 중요합니다:</p>
+  <p><b>1. 치료 강도 결정</b><br>
+     - 고위험 → 더 적극적인 초기 치료<br>
+     - 저위험 → 부작용 최소화한 표준 치료</p>
+  <p><b>2. 임상시험 참여</b><br>
+     - 고위험군 대상 신약 임상시험<br>
+     - 맞춤형 치료법 개발</p>
+  <p><b>3. 모니터링 주기</b><br>
+     - 고위험: 집중 추적 관찰<br>
+     - 저위험: 정기 검진</p>
+  <p><b>4. 예후 상담</b><br>
+     - 정확한 예후 정보 제공<br>
+     - 치료 계획 수립 지원</p>
+</div>
+""",
         unsafe_allow_html=True,
     )
+
+    # ---------- 임상 활용 (배경색 카드 한 번에) ----------
     st.markdown(
         """
-### 💡 Clinical Applications
-
-✅ **진단 시점 위험 평가** - 새로 진단된 MM 환자의 예후 예측  
-
-✅ **개인 맞춤형 치료** - 위험군별 차별화된 치료 프로토콜  
-
-✅ **임상 의사결정 지원** - 200개 유전자 기반 객관적 예측  
-
-✅ **정밀 종양학 실현** - 분자 수준의 환자 계층화  
-
----
-
-**⚠️ 중요**: 이 도구는 임상 의사결정을 **보조**하는 목적으로 개발되었으며,  
-최종 치료 결정은 반드시 전문의의 종합적인 판단 하에 이루어져야 합니다.
-"""
+<div class="card" style="background:#e8f4f3; border-left:4px solid #2d5f5d;">
+  <h3>💡 Clinical Applications</h3>
+  <p>✅ <b>진단 시점 위험 평가</b> - 새로 진단된 MM 환자의 예후 예측</p>
+  <p>✅ <b>개인 맞춤형 치료</b> - 위험군별 차별화된 치료 프로토콜</p>
+  <p>✅ <b>임상 의사결정 지원</b> - 200개 유전자 기반 객관적 예측</p>
+  <p>✅ <b>정밀 종양학 실현</b> - 분자 수준의 환자 계층화</p>
+  <hr>
+  <p><b>⚠️ 중요</b>: 이 도구는 임상 의사결정을 <b>보조</b>하는 목적으로 개발되었으며,<br>
+     최종 치료 결정은 반드시 전문의의 종합적인 판단 하에 이루어져야 합니다.</p>
+</div>
+""",
+        unsafe_allow_html=True,
     )
-    st.markdown("</div>", unsafe_allow_html=True)
