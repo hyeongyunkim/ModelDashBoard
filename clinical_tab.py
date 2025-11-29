@@ -29,39 +29,31 @@ def render_clinical_tab() -> None:
         unsafe_allow_html=True,
     )
 
-    # ---------- Risk Group 설명 (표가 들어가서 카드 래퍼 제거) ----------
+    # ---------- Risk Group 설명 (3개 위험군) ----------
     st.markdown("### 🏥 Risk Group Classification")
-    st.markdown("환자는 Risk Score를 기반으로 **5개의 위험군**으로 분류됩니다:")
+    st.markdown("환자는 Risk Score를 기반으로 **3개의 위험군**으로 분류됩니다:")
 
     risk_groups = pd.DataFrame(
         {
             "Risk Group": [
-                "Very Low Risk",
                 "Low Risk",
                 "Medium Risk",
                 "High Risk",
-                "Very High Risk",
             ],
             "Risk Score Range": [
-                "0.8 - 1.0",
-                "0.6 - 0.8",
-                "0.4 - 0.6",
-                "0.2 - 0.4",
-                "0.0 - 0.2",
+                "0.66 - 1.0",
+                "0.33 - 0.66",
+                "0.0 - 0.33",
             ],
             "Expected Survival": [
-                "80-100%",
-                "60-80%",
-                "40-60%",
-                "20-40%",
-                "0-20%",
+                "66-100%",
+                "33-66%",
+                "0-33%",
             ],
             "Clinical Action": [
-                "Standard treatment",
-                "Regular monitoring",
-                "Close observation",
-                "Aggressive treatment",
-                "Intensive therapy",
+                "Standard treatment / 정기 추적",
+                "Close monitoring / 치료 전략 조정",
+                "Aggressive / intensive therapy",
             ],
         }
     )
