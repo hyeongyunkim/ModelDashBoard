@@ -5,11 +5,17 @@ import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+# -------------------------------------------------------
+# 0. 기본 설정
+# -------------------------------------------------------
 st.set_page_config(
     page_title="MM 예후 예측 대시보드",
     layout="wide"
 )
 
+# -------------------------------------------------------
+# 1. 모델 + feature 리스트 로드
+# -------------------------------------------------------
 @st.cache_resource
 def load_model_and_features():
     model = joblib.load("xgb_mm_model.pkl")
@@ -21,156 +27,107 @@ model, feature_cols = load_model_and_features()
 st.title("🧬 Multiple Myeloma 예후 예측 대시보드 (XGBoost)")
 
 st.markdown("""
-- 한 줄 = 한 명의 환자  
-- 한 컬럼 = 최종 선정된 유전자 200개  
-- 값 = 각 유전자의 발현량 (학습 데이터와 스케일 통일)
+### 📌 모델 설명  
+- 입력: **10개 샘플 유전자**  
+- 모델: **최종 XGBoost 생존 예측 모델**  
+- 유전자: 최종 선정된 feature 200개  
+- 목적: **사망 위험도(0~1)** 점수 + **Very Low ~ Very High 등급 분류**  
 """)
 
-# -----------------------------
-# 1. 데이터 입력 영역 (사이드바)
-# -----------------------------
-st.sidebar.header("입력 데이터 설정")
+# -------------------------------------------------------
+# 2. 사용자 입력 구간
+# -------------------------------------------------------
+st.sidebar.header("📥 입력 데이터 설정")
 
-input_mode = st.sidebar.radio(
+input_option = st.sidebar.radio(
     "입력 방식 선택",
-    ["CSV 업로드", "샘플 데이터 사용"],
+    ["테스트용 샘플 보기", "CSV 업로드(사용자 입력)"]
 )
 
-if input_mode == "CSV 업로드":
-    uploaded_file = st.sidebar.file_uploader(
-        "유전자 발현 CSV 업로드 (.csv)",
-        type=["csv"]
-    )
-    if uploaded_file is not None:
-        data = pd.read_csv(uploaded_file)
+# CSV 업로드 처리
+if input_option == "CSV 업로드(사용자 입력)":
+    uploaded = st.sidebar.file_uploader("CSV 파일 업로드", type=["csv"])
+    if uploaded is not None:
+        user_df = pd.read_csv(uploaded)
+        st.success("업로드 성공!")
     else:
-        data = None
+        st.warning("CSV 파일을 업로드해주세요.")
+        user_df = None  # 업로드 전까지는 None
 else:
-    # 샘플 데이터 사용
-    data = pd.read_csv("example_input.csv")
-    st.sidebar.info("샘플 데이터(예: 학습 데이터 일부)를 사용 중입니다.")
+    st.sidebar.info("샘플 데이터를 사용하려면 example_input.csv가 필요합니다.")
+    # user_df = pd.read_csv("example_input.csv")  # 주석 처리
+    user_df = None  # 샘플 파일이 없으면 None
 
-# -----------------------------
-# 2. 예측 실행 버튼
-# -----------------------------
-run_pred = st.sidebar.button("🔮 예측 실행")
+# -------------------------------------------------------
+# 3. 입력 데이터 확인
+# -------------------------------------------------------
+st.subheader("📊 입력 데이터 미리보기")
 
-if not run_pred:
-    st.info("왼쪽 사이드바에서 데이터를 선택하고 **🔮 예측 실행** 버튼을 눌러줘.")
-    st.stop()
+if user_df is not None:
+    st.dataframe(user_df.head())
+else:
+    st.info("데이터를 업로드하거나 선택해주세요.")
 
-if data is None:
-    st.error("CSV 파일을 업로드 해주세요.")
-    st.stop()
+# -------------------------------------------------------
+# 4. 예측 함수 정의
+# -------------------------------------------------------
+from sklearn.preprocessing import StandardScaler
 
-# -----------------------------
-# 3. 컬럼 체크 & 정리
-# -----------------------------
-st.subheader("1️⃣ 입력 데이터 확인")
+def run_prediction(df):
+    df = df.copy()
 
-st.write(f"입력 데이터 shape: `{data.shape[0]} samples × {data.shape[1]} columns`")
+    # 필요한 feature만 사용
+    df = df[feature_cols]
 
-missing_cols = [c for c in feature_cols if c not in data.columns]
-extra_cols = [c for c in data.columns if c not in feature_cols]
+    # 스케일링
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(df)
 
-if missing_cols:
-    st.error(f"🌋 필수 유전자 {len(missing_cols)}개가 빠져 있습니다.\n\n예시: {missing_cols[:10]}")
-    st.stop()
+    # 위험도 예측
+    risk = model.predict_proba(X_scaled)[:, 1]
 
-if extra_cols:
-    st.warning(f"참고: 모델에서 사용하지 않는 컬럼 {len(extra_cols)}개가 있습니다. (무시됨)\n\n예시: {extra_cols[:10]}")
+    # 위험도 구간 나누기
+    bins = ["Very Low", "Low", "Medium", "High", "Very High"]
+    df_result = pd.DataFrame({
+        "Risk_Score": risk,
+        "Pred_Group": pd.qcut(risk, 5, labels=bins)
+    })
+    return df_result
 
-# 모델용 X만 추출
-X = data[feature_cols]
+# -------------------------------------------------------
+# 5. 예측 실행 버튼
+# -------------------------------------------------------
+st.subheader("🧪 예측 실행")
 
-st.write("입력 데이터 미리보기 (상위 5행)")
-st.dataframe(X.head())
+if st.button("예측하기"):
+    if user_df is None:
+        st.error("먼저 데이터를 업로드해주세요!")
+    else:
+        try:
+            result_df = run_prediction(user_df)
 
-# -----------------------------
-# 4. 예측 수행
-# -----------------------------
-st.subheader("2️⃣ 예측 결과 계산")
+            st.success("예측 완료!")
+            st.write("### 🩸 예측 결과")
+            st.dataframe(result_df)
 
-# XGBoost: class 1(사망)의 확률을 Risk Score로 사용
-probas = model.predict_proba(X)[:, 1]
-data_result = data.copy()
-data_result["Risk_Score"] = probas
+            # -------------------------------------------------------
+            # 6. 시각화 (히스토그램 + 박스플롯)
+            # -------------------------------------------------------
+            st.markdown("### 📈 Risk Score Distribution")
 
-# Risk Score 기반 quantile 그룹 나누기 (Very Low ~ Very High)
-n_bins = 5
-try:
-    bins = np.quantile(probas, [0, 0.2, 0.4, 0.6, 0.8, 1])
-    labels = ["Very Low", "Low", "Medium", "High", "Very High"]
-    data_result["Risk_Group"] = pd.cut(
-        probas,
-        bins=bins,
-        labels=labels,
-        include_lowest=True,
-        duplicates="drop"
-    )
-except Exception as e:
-    # 혹시 quantile이 겹치면 equal-width로 대체
-    st.warning(f"Quantile 분리가 실패해서 equal-width로 대체했습니다. ({e})")
-    bins = n_bins
-    labels = ["Very Low", "Low", "Medium", "High", "Very High"]
-    data_result["Risk_Group"] = pd.cut(
-        probas,
-        bins=bins,
-        labels=labels
-    )
+            fig1, ax1 = plt.subplots(figsize=(6,4))
+            sns.histplot(result_df["Risk_Score"], bins=20, kde=True, ax=ax1)
+            st.pyplot(fig1)
 
-st.success("✅ 예측 완료!")
+            st.markdown("### 📊 Risk Group Boxplot")
 
-# 핵심 결과 테이블
-st.write("### 예측 결과 테이블 (앞 10명만 표시)")
-st.dataframe(
-    data_result[["Risk_Score", "Risk_Group"]].head(10).style.format(
-        {"Risk_Score": "{:.4f}"}
-    )
-)
+            fig2, ax2 = plt.subplots(figsize=(6,4))
+            sns.boxplot(x="Pred_Group", y="Risk_Score", data=result_df, ax=ax2)
+            st.pyplot(fig2)
 
-# -----------------------------
-# 5. 시각화: Risk Score 분포
-# -----------------------------
-st.subheader("3️⃣ Risk Score 분포 시각화")
+        except Exception as e:
+            st.error(f"오류 발생: {e}")
+            st.info("⚠ 업로드한 CSV가 feature_cols.pkl의 구성과 맞는지 확인하세요.")
 
-col1, col2 = st.columns(2)
-
-with col1:
-    st.markdown("#### 📊 전체 Risk Score 분포 (Histogram)")
-    fig, ax = plt.subplots(figsize=(5, 4))
-    sns.histplot(data_result["Risk_Score"], kde=True, ax=ax)
-    ax.set_xlabel("Risk Score (High → Death Likelihood)")
-    ax.set_ylabel("Count")
-    ax.grid(alpha=0.3, axis="y")
-    st.pyplot(fig)
-
-with col2:
-    st.markdown("#### 🎯 Risk Group별 Score 분포 (Boxplot)")
-    fig2, ax2 = plt.subplots(figsize=(5, 4))
-    order = ["Very Low", "Low", "Medium", "High", "Very High"]
-    sns.boxplot(
-        x="Risk_Group",
-        y="Risk_Score",
-        data=data_result,
-        order=order,
-        ax=ax2
-    )
-    ax2.set_xlabel("Predicted Risk Group")
-    ax2.set_ylabel("Risk Score")
-    ax2.grid(alpha=0.3, axis="y")
-    st.pyplot(fig2)
-
-# -----------------------------
-# 6. 그룹별 요약 통계
-# -----------------------------
-st.subheader("4️⃣ Risk Group별 요약 통계")
-
-group_summary = (
-    data_result
-    .groupby("Risk_Group")["Risk_Score"]
-    .agg(["count", "mean", "min", "max"])
-    .reindex(["Very Low", "Low", "Medium", "High", "Very High"])
-)
-
-st.dataframe(group_summary.style.format("{:.4f}"))
+else:
+    st.info("좌측에서 데이터를 선택하고 **예측하기** 버튼을 눌러주세요.")
