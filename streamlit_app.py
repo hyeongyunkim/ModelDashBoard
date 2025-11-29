@@ -57,12 +57,34 @@ st.markdown("""
         color: #2d5f5d;
     }
     
-    /* 사이드바 스타일 */
-    .sidebar-card {
-        background: #e8f4f3;
-        padding: 1.5rem;
-        border-radius: 10px;
+    /* 업로드 영역 스타일 */
+    .upload-container {
+        background: white;
+        padding: 3rem;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        text-align: center;
+        border: 2px dashed #3d7f7d;
+        margin: 2rem 0;
+    }
+    
+    .upload-icon {
+        font-size: 4rem;
+        color: #3d7f7d;
         margin-bottom: 1rem;
+    }
+    
+    .upload-title {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: #2d5f5d;
+        margin-bottom: 0.5rem;
+    }
+    
+    .upload-subtitle {
+        font-size: 1rem;
+        color: #6c757d;
+        margin-bottom: 2rem;
     }
     
     /* 위험도 배지 */
@@ -99,25 +121,6 @@ st.markdown("""
         color: #721c24;
     }
     
-    /* 테이블 스타일 */
-    .patient-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    
-    .patient-table th {
-        background-color: #f8f9fa;
-        padding: 1rem;
-        text-align: left;
-        font-weight: 600;
-        color: #2d5f5d;
-    }
-    
-    .patient-table td {
-        padding: 1rem;
-        border-bottom: 1px solid #e9ecef;
-    }
-    
     /* 통계 카드 */
     .stat-card {
         background: white;
@@ -137,6 +140,32 @@ st.markdown("""
         font-size: 0.9rem;
         color: #6c757d;
         margin-top: 0.5rem;
+    }
+    
+    /* 기능 카드 */
+    .feature-card {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        border-left: 4px solid #3d7f7d;
+    }
+    
+    .feature-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .feature-title {
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #2d5f5d;
+        margin-bottom: 0.3rem;
+    }
+    
+    .feature-desc {
+        font-size: 0.9rem;
+        color: #6c757d;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -173,31 +202,95 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------
-# 2. 사이드바 - 환자 목록
+# 2. 사이드바
 # -------------------------------------------------------
 st.sidebar.markdown("""
 <div style="text-align: center; padding: 1rem 0;">
-    <h2 style="margin: 0; color: #2d5f5d;">환자 목록</h2>
+    <h2 style="margin: 0; color: #2d5f5d;">📋 메뉴</h2>
 </div>
 """, unsafe_allow_html=True)
 
-# 검색 기능
-search_query = st.sidebar.text_input("🔍 검색...", "")
-
-# 환자 데이터 업로드
-uploaded = st.sidebar.file_uploader("📁 CSV 파일 업로드", type=["csv"])
-
-if uploaded is not None:
-    user_df = pd.read_csv(uploaded)
-else:
-    user_df = None
-    st.sidebar.info("CSV 파일을 업로드해주세요.")
+menu_option = st.sidebar.radio(
+    "기능 선택",
+    ["📁 데이터 업로드", "📊 분석 결과", "ℹ️ 사용 가이드"],
+    label_visibility="collapsed"
+)
 
 # -------------------------------------------------------
 # 3. 메인 영역
 # -------------------------------------------------------
 
-if user_df is not None:
+# 파일 업로드
+uploaded = st.file_uploader("", type=["csv"], label_visibility="collapsed")
+
+if uploaded is None:
+    # 업로드 안내 화면
+    st.markdown("""
+    <div class="upload-container">
+        <div class="upload-icon">📁</div>
+        <div class="upload-title">환자 데이터 업로드</div>
+        <div class="upload-subtitle">CSV 파일을 업로드하여 Multiple Myeloma 예후를 예측하세요</div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # 시스템 기능 소개
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-icon">🎯</div>
+            <div class="feature-title">정확한 예측</div>
+            <div class="feature-desc">XGBoost 기반 머신러닝 모델로 높은 정확도의 생존율 예측을 제공합니다</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <div class="feature-title">시각화 분석</div>
+            <div class="feature-desc">환자별 위험도를 직관적인 차트와 그래프로 확인할 수 있습니다</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-icon">⚡</div>
+            <div class="feature-title">빠른 처리</div>
+            <div class="feature-desc">대량의 환자 데이터를 한 번에 업로드하여 즉시 결과를 확인할 수 있습니다</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # 사용 방법
+    st.markdown('<div class="card" style="margin-top: 2rem;">', unsafe_allow_html=True)
+    st.markdown('<div class="card-title">📖 사용 방법</div>', unsafe_allow_html=True)
+    
+    st.markdown("""
+    **1단계: 데이터 준비**
+    - 환자의 유전자 발현 데이터가 포함된 CSV 파일을 준비하세요
+    - 200개의 선정된 유전자 feature가 포함되어야 합니다
+    
+    **2단계: 파일 업로드**
+    - 위의 업로드 영역에 CSV 파일을 드래그하거나 클릭하여 업로드하세요
+    
+    **3단계: 결과 확인**
+    - 자동으로 예측이 실행되며, 환자별 생존율과 위험군이 표시됩니다
+    - 다양한 시각화 차트로 전체 데이터를 분석할 수 있습니다
+    
+    **4단계: 데이터 활용**
+    - 예측 결과를 다운로드하여 추가 분석에 활용하세요
+    """)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+
+else:
+    # 파일이 업로드된 경우
+    user_df = pd.read_csv(uploaded)
+    
+    st.success(f"✅ 파일 업로드 완료! ({len(user_df)}개 샘플)")
+    
     # 예측 함수 정의
     from sklearn.preprocessing import StandardScaler
 
@@ -232,66 +325,84 @@ if user_df is not None:
     # 예측 실행
     result_df = run_prediction(user_df)
     
+    # 통계 카드
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.markdown('<div class="stat-card">', unsafe_allow_html=True)
+        st.markdown(f'<div class="stat-number">{len(result_df)}명</div>', unsafe_allow_html=True)
+        st.markdown('<div class="stat-label">총 환자</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    with col2:
+        high_risk = len(result_df[result_df["위험군"].isin(["고위험", "초고위험"])])
+        st.markdown('<div class="stat-card">', unsafe_allow_html=True)
+        st.markdown(f'<div class="stat-number" style="color: #dc3545;">{high_risk}명</div>', unsafe_allow_html=True)
+        st.markdown('<div class="stat-label">고위험군</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    with col3:
+        avg_survival = int(result_df["Risk_Score"].mean() * 100)
+        st.markdown('<div class="stat-card">', unsafe_allow_html=True)
+        st.markdown(f'<div class="stat-number" style="color: #28a745;">{avg_survival}%</div>', unsafe_allow_html=True)
+        st.markdown('<div class="stat-label">평균 생존율</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    with col4:
+        low_risk = len(result_df[result_df["위험군"].isin(["저위험", "초저위험"])])
+        st.markdown('<div class="stat-card">', unsafe_allow_html=True)
+        st.markdown(f'<div class="stat-number" style="color: #17a2b8;">{low_risk}명</div>', unsafe_allow_html=True)
+        st.markdown('<div class="stat-label">저위험군</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+    
     # 탭 생성
     tab1, tab2 = st.tabs(["📊 환자 목록", "📈 통계 분석"])
     
     with tab1:
-        col1, col2 = st.columns([2, 1])
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.markdown('<div class="card-title">환자별 예측 결과</div>', unsafe_allow_html=True)
         
+        # 정렬 옵션
+        col1, col2, col3 = st.columns([1, 1, 2])
         with col1:
-            st.markdown('<div class="card">', unsafe_allow_html=True)
-            st.markdown('<div class="card-title">최신 환자 목록</div>', unsafe_allow_html=True)
-            
-            # 정렬 옵션
-            sort_col1, sort_col2, sort_col3 = st.columns([1, 1, 2])
-            with sort_col1:
-                sort_option = st.selectbox("정렬:", ["최신순", "생존율", "위험군"])
-            
-            # 테이블 생성
-            for idx, row in result_df.head(10).iterrows():
-                risk_class = ""
-                if "초고위험" in row["위험군"]:
-                    risk_class = "risk-very-high"
-                elif "고위험" in row["위험군"]:
-                    risk_class = "risk-high"
-                elif "중간위험" in row["위험군"]:
-                    risk_class = "risk-medium"
-                elif "저위험" in row["위험군"]:
-                    risk_class = "risk-low"
-                else:
-                    risk_class = "risk-very-low"
-                
-                st.markdown(f"""
-                <div style="background: white; padding: 1rem; margin-bottom: 0.5rem; border-radius: 5px; border-left: 4px solid #2d5f5d;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div><strong>{row['Patient_ID']}</strong></div>
-                        <div><strong style="font-size: 1.2rem; color: #2d5f5d;">{row['생존율']}</strong></div>
-                        <div><span class="risk-badge {risk_class}">{row['위험군']}</span></div>
-                        <div style="color: #6c757d;">{row['최종_업데이트']}</div>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-            
-            st.markdown('</div>', unsafe_allow_html=True)
+            sort_option = st.selectbox("정렬:", ["최신순", "생존율 높은 순", "생존율 낮은 순", "위험군"])
         
-        with col2:
-            # 통계 카드들
-            st.markdown('<div class="stat-card">', unsafe_allow_html=True)
-            st.markdown(f'<div class="stat-number">{len(result_df)}명</div>', unsafe_allow_html=True)
-            st.markdown('<div class="stat-label">총 환자</div>', unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True)
+        # 정렬 적용
+        if sort_option == "생존율 높은 순":
+            display_df = result_df.sort_values("Risk_Score", ascending=False)
+        elif sort_option == "생존율 낮은 순":
+            display_df = result_df.sort_values("Risk_Score", ascending=True)
+        elif sort_option == "위험군":
+            display_df = result_df.sort_values("위험군")
+        else:
+            display_df = result_df
+        
+        # 테이블 생성
+        for idx, row in display_df.head(20).iterrows():
+            risk_class = ""
+            if "초고위험" in row["위험군"]:
+                risk_class = "risk-very-high"
+            elif "고위험" in row["위험군"]:
+                risk_class = "risk-high"
+            elif "중간위험" in row["위험군"]:
+                risk_class = "risk-medium"
+            elif "저위험" in row["위험군"]:
+                risk_class = "risk-low"
+            else:
+                risk_class = "risk-very-low"
             
-            high_risk = len(result_df[result_df["위험군"].isin(["고위험", "초고위험"])])
-            st.markdown('<div class="stat-card" style="margin-top: 1rem;">', unsafe_allow_html=True)
-            st.markdown(f'<div class="stat-number" style="color: #dc3545;">{high_risk}명</div>', unsafe_allow_html=True)
-            st.markdown('<div class="stat-label">고위험군</div>', unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True)
-            
-            avg_survival = int(result_df["Risk_Score"].mean() * 100)
-            st.markdown('<div class="stat-card" style="margin-top: 1rem;">', unsafe_allow_html=True)
-            st.markdown(f'<div class="stat-number" style="color: #28a745;">{avg_survival}%</div>', unsafe_allow_html=True)
-            st.markdown('<div class="stat-label">평균 생존율</div>', unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown(f"""
+            <div style="background: white; padding: 1rem; margin-bottom: 0.5rem; border-radius: 5px; border-left: 4px solid #2d5f5d;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="flex: 1;"><strong>{row['Patient_ID']}</strong></div>
+                    <div style="flex: 1; text-align: center;"><strong style="font-size: 1.2rem; color: #2d5f5d;">{row['생존율']}</strong></div>
+                    <div style="flex: 1; text-align: center;"><span class="risk-badge {risk_class}">{row['위험군']}</span></div>
+                    <div style="flex: 1; text-align: right; color: #6c757d;">{row['최종_업데이트']}</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
     
     with tab2:
         st.markdown('<div class="card">', unsafe_allow_html=True)
@@ -303,7 +414,7 @@ if user_df is not None:
             # 위험군별 분포 막대그래프
             fig1, ax1 = plt.subplots(figsize=(8, 5))
             risk_counts = result_df["위험군"].value_counts()
-            colors = ['#d4edda', '#fff3cd', '#ffc107', '#f8d7da', '#dc3545']
+            colors = ['#28a745', '#17a2b8', '#ffc107', '#fd7e14', '#dc3545']
             risk_counts.plot(kind='bar', ax=ax1, color=colors[:len(risk_counts)])
             ax1.set_title('위험군별 환자 수', fontsize=14, fontweight='bold', pad=20)
             ax1.set_xlabel('')
@@ -337,12 +448,3 @@ if user_df is not None:
         st.pyplot(fig3)
         
         st.markdown('</div>', unsafe_allow_html=True)
-
-else:
-    # 데이터가 없을 때
-    st.markdown("""
-    <div class="card" style="text-align: center; padding: 3rem;">
-        <h3 style="color: #6c757d;">📁 CSV 파일을 업로드해주세요</h3>
-        <p style="color: #6c757d;">좌측 사이드바에서 환자 데이터 파일을 업로드하면<br>자동으로 예측 결과를 확인할 수 있습니다.</p>
-    </div>
-    """, unsafe_allow_html=True)
