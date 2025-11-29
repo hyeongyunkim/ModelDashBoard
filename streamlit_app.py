@@ -277,16 +277,15 @@ with tab1:
             c1, c2, c3, c4 = st.columns(4)
 
             with c1:
-                st.markdown('<div class="stat-card">', unsafe_allow_html=True)
                 st.markdown(
-                    f'<div class="stat-number">{len(result_df)}</div>',
+                    f"""
+                    <div class="stat-card">
+                        <div class="stat-number">{len(result_df)}</div>
+                        <div class="stat-label">Total Patients</div>
+                    </div>
+                    """,
                     unsafe_allow_html=True,
                 )
-                st.markdown(
-                    '<div class="stat-label">Total Patients</div>',
-                    unsafe_allow_html=True,
-                )
-                st.markdown("</div>", unsafe_allow_html=True)
 
             with c2:
                 high_risk = len(
@@ -296,31 +295,29 @@ with tab1:
                         )
                     ]
                 )
-                st.markdown('<div class="stat-card">', unsafe_allow_html=True)
                 st.markdown(
-                    f'<div class="stat-number" style="color: #dc3545;">{high_risk}</div>',
+                    f"""
+                    <div class="stat-card">
+                        <div class="stat-number" style="color:#dc3545;">{high_risk}</div>
+                        <div class="stat-label">High Risk</div>
+                    </div>
+                    """,
                     unsafe_allow_html=True,
                 )
-                st.markdown(
-                    '<div class="stat-label">High Risk</div>',
-                    unsafe_allow_html=True,
-                )
-                st.markdown("</div>", unsafe_allow_html=True)
 
             with c3:
                 medium_risk = len(
                     result_df[result_df["Risk_Group"] == "Medium Risk"]
                 )
-                st.markdown('<div class="stat-card">', unsafe_allow_html=True)
                 st.markdown(
-                    f'<div class="stat-number" style="color: #ffc107;">{medium_risk}</div>',
+                    f"""
+                    <div class="stat-card">
+                        <div class="stat-number" style="color:#ffc107;">{medium_risk}</div>
+                        <div class="stat-label">Medium Risk</div>
+                    </div>
+                    """,
                     unsafe_allow_html=True,
                 )
-                st.markdown(
-                    '<div class="stat-label">Medium Risk</div>',
-                    unsafe_allow_html=True,
-                )
-                st.markdown("</div>", unsafe_allow_html=True)
 
             with c4:
                 low_risk = len(
@@ -330,16 +327,15 @@ with tab1:
                         )
                     ]
                 )
-                st.markdown('<div class="stat-card">', unsafe_allow_html=True)
                 st.markdown(
-                    f'<div class="stat-number" style="color: #28a745;">{low_risk}</div>',
+                    f"""
+                    <div class="stat-card">
+                        <div class="stat-number" style="color:#28a745;">{low_risk}</div>
+                        <div class="stat-label">Low Risk</div>
+                    </div>
+                    """,
                     unsafe_allow_html=True,
                 )
-                st.markdown(
-                    '<div class="stat-label">Low Risk</div>',
-                    unsafe_allow_html=True,
-                )
-                st.markdown("</div>", unsafe_allow_html=True)
 
             # --------- 전체 결과 테이블 ---------
             st.markdown("### 📋 Patient-wise Results")
