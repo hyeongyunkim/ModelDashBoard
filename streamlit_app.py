@@ -135,7 +135,7 @@ st.markdown("""
 <div class="header-container">
     <div class="header-title">🧬 MM Risk Predictor</div>
     <p style="margin: 0.5rem 0 0 0; opacity: 0.9; font-size: 1.1rem;">
-        XGBoost-based Multiple Myeloma Prognosis Prediction
+        Gene expression-based Multiple Myeloma Prognosis Prediction
     </p>
 </div>
 """, unsafe_allow_html=True)
@@ -461,7 +461,7 @@ with tab2:
     - **0에 가까울수록**: 낮은 사망 위험 (높은 생존율)
     - **1에 가까울수록**: 높은 사망 위험 (낮은 생존율)
     
-    이 점수는 200개의 핵심 유전자 발현 패턴을 XGBoost 모델이 분석하여 계산됩니다.
+    이 점수는 200개의 핵심 유전자 발현 패턴을 예측 모델이 분석하여 계산됩니다.
     """)
     st.markdown('</div>', unsafe_allow_html=True)
     
@@ -504,13 +504,14 @@ with tab2:
         fig5, ax5 = plt.subplots(figsize=(8, 5))
         bars = ax5.barh(metrics_data["Metric"], metrics_data["Value"], color='#3d7f7d')
         ax5.set_xlabel('Score', fontsize=11, fontweight='bold')
-        ax5.set_title('XGBoost Model Performance', fontsize=13, fontweight='bold', pad=15)
+        ax5.set_title('Prediction Model Performance', fontsize=13, fontweight='bold', pad=15)
         ax5.set_xlim(0, 1)
         ax5.grid(True, alpha=0.3, axis='x')
         
         # 값 표시
         for i, (metric, value) in enumerate(zip(metrics_data["Metric"], metrics_data["Value"])):
-            ax5.text(value + 0.02, i, f'{value:.2f}', va='center', fontsize=10, fontweight='bold')
+
+        ax5.text(value + 0.02, i, f'{value:.2f}', va='center', fontsize=10, fontweight='bold')
         
         plt.tight_layout()
         st.pyplot(fig5)
@@ -621,16 +622,16 @@ with tab2:
         st.markdown("""
         #### Known Biomarkers
         
-        **SPARC** ⭐
-        - MM 바이오마커
+        **SPARC** ⭐  
+        - MM 바이오마커  
         - 세포외 기질 단백질
         
-        **CD58** ⭐
-        - 면역 조절 관련
+        **CD58** ⭐  
+        - 면역 조절 관련  
         - MM 예후 마커
         
-        **IL2** ⭐
-        - 면역 반응 관련
+        **IL2** ⭐  
+        - 면역 반응 관련  
         - T세포 활성화
         
         ➡️ 모델의 **생물학적 타당성** 확보
@@ -664,19 +665,20 @@ with tab2:
     
     # 임상 활용
     st.markdown('<div class="card" style="background: #e8f4f3; border-left: 4px solid #2d5f5d;">', unsafe_allow_html=True)
-    st.markdown("### 💡 Clinical Applications")
     st.markdown("""
-    ✅ **진단 시점 위험 평가** - 새로 진단된 MM 환자의 예후 예측
+    ### 💡 Clinical Applications
     
-    ✅ **개인 맞춤형 치료** - 위험군별 차별화된 치료 프로토콜
+    ✅ **진단 시점 위험 평가** - 새로 진단된 MM 환자의 예후 예측  
     
-    ✅ **임상 의사결정 지원** - 200개 유전자 기반 객관적 예측
+    ✅ **개인 맞춤형 치료** - 위험군별 차별화된 치료 프로토콜  
     
-    ✅ **정밀 종양학 실현** - 분자 수준의 환자 계층화
+    ✅ **임상 의사결정 지원** - 200개 유전자 기반 객관적 예측  
+    
+    ✅ **정밀 종양학 실현** - 분자 수준의 환자 계층화  
     
     ---
     
-    **⚠️ 중요**: 이 도구는 임상 의사결정을 **보조**하는 목적으로 개발되었으며, 
+    **⚠️ 중요**: 이 도구는 임상 의사결정을 **보조**하는 목적으로 개발되었으며,  
     최종 치료 결정은 반드시 전문의의 종합적인 판단 하에 이루어져야 합니다.
     """)
     st.markdown('</div>', unsafe_allow_html=True)
