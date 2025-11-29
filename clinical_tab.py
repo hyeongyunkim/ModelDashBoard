@@ -5,74 +5,52 @@ from matplotlib.patches import Patch
 
 
 def render_clinical_tab() -> None:
-    """Clinical Interpretation 탭을 렌더링하는 함수."""
+    """Clinical Interpretation 탭"""
 
-    # 섹션 타이틀 공통
+    # ========= Section Title =========
     st.markdown(
         '<div class="section-title">📋 Understanding Your Results</div>',
         unsafe_allow_html=True,
     )
 
-    # ---------- Risk Score 설명 (텍스트 + 카드 안에 다 넣음) ----------
+    # ========= What is Risk Score =========
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown("### 🎯 What is Risk Score?")
     st.markdown(
         """
-<div class="card">
-  <h3>🎯 What is Risk Score?</h3>
-  <p><b>Risk Score</b>는 환자의 <b>2년 내 사망 확률</b>을 나타냅니다.</p>
-  <ul>
-    <li><b>0에 가까울수록</b>: 낮은 사망 위험 (높은 생존율)</li>
-    <li><b>1에 가까울수록</b>: 높은 사망 위험 (낮은 생존율)</li>
-  </ul>
-  <p>이 점수는 200개의 핵심 유전자 발현 패턴을 예측 모델이 분석하여 계산됩니다.</p>
-</div>
-""",
-        unsafe_allow_html=True,
-    )
+**Risk Score**는 환자의 **2년 내 사망 확률(0~1)** 을 나타냅니다.
 
-    # ---------- Risk Group 설명 (표가 들어가서 카드 래퍼 제거) ----------
+- **0에 가까울수록 → 높은 위험 (낮은 생존율)**  
+- **1에 가까울수록 → 낮은 위험 (높은 생존율)**  
+
+이 점수는 **200개 핵심 유전자 발현 패턴**을 기반으로 예측 모델이 계산합니다.
+"""
+    )
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # ========= Risk Group Classification (3 groups) =========
+    st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown("### 🏥 Risk Group Classification")
-    st.markdown("환자는 Risk Score를 기반으로 **5개의 위험군**으로 분류됩니다:")
+    st.markdown("환자는 Risk Score를 기반으로 **3개의 위험군**으로 분류됩니다:")
 
     risk_groups = pd.DataFrame(
         {
-            "Risk Group": [
-                "Very Low Risk",
-                "Low Risk",
-                "Medium Risk",
-                "High Risk",
-                "Very High Risk",
-            ],
-            "Risk Score Range": [
-                "0.8 - 1.0",
-                "0.6 - 0.8",
-                "0.4 - 0.6",
-                "0.2 - 0.4",
-                "0.0 - 0.2",
-            ],
-            "Expected Survival": [
-                "80-100%",
-                "60-80%",
-                "40-60%",
-                "20-40%",
-                "0-20%",
-            ],
+            "Risk Group": ["Low Risk", "Medium Risk", "High Risk"],
+            "Risk Score Range": ["0.6 - 1.0", "0.3 - 0.6", "0.0 - 0.3"],
+            "Expected Survival": ["60–100%", "30–60%", "0–30%"],
             "Clinical Action": [
-                "Standard treatment",
-                "Regular monitoring",
+                "Standard treatment / Regular monitoring",
                 "Close observation",
-                "Aggressive treatment",
-                "Intensive therapy",
+                "Aggressive / Intensive therapy",
             ],
         }
     )
 
-    st.dataframe(
-        risk_groups,
-        use_container_width=True,
-        hide_index=True,
-    )
+    st.dataframe(risk_groups, use_container_width=True, hide_index=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    # ---------- 모델 성능 (그래프 섹션: 카드 래퍼 제거) ----------
+    # ========= Model Performance =========
+    st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown("### 📊 Model Performance Metrics")
 
     c1, c2 = st.columns([1, 1])
@@ -80,272 +58,157 @@ def render_clinical_tab() -> None:
     with c1:
         metrics_data = pd.DataFrame(
             {
-                "Metric": [
-                    "AUC",
-                    "MCC",
-                    "Recall",
-                    "Precision",
-                    "F1-Score",
-                    "Accuracy",
-                ],
+                "Metric": ["AUC", "MCC", "Recall", "Precision", "F1-Score", "Accuracy"],
                 "Value": [0.92, 0.85, 0.89, 0.91, 0.90, 0.88],
             }
         )
 
-        fig5, ax5 = plt.subplots(figsize=(8, 5))
-        ax5.barh(metrics_data["Metric"], metrics_data["Value"], color="#3d7f7d")
-        ax5.set_xlabel("Score", fontsize=11, fontweight="bold")
-        ax5.set_title(
-            "Prediction Model Performance",
-            fontsize=13,
-            fontweight="bold",
-            pad=15,
-        )
-        ax5.set_xlim(0, 1)
-        ax5.grid(True, alpha=0.3, axis="x")
+        fig, ax = plt.subplots(figsize=(8, 5))
+        ax.barh(metrics_data["Metric"], metrics_data["Value"], color="#3d7f7d")
+        ax.set_xlabel("Score", fontsize=11, fontweight="bold")
+        ax.set_title("Prediction Model Performance", fontsize=13, fontweight="bold")
+        ax.set_xlim(0, 1)
+        ax.grid(True, alpha=0.3, axis="x")
 
-        for i, value in enumerate(metrics_data["Value"]):
-            ax5.text(
-                value + 0.02,
-                i,
-                f"{value:.2f}",
-                va="center",
-                fontsize=10,
-                fontweight="bold",
-            )
+        # 숫자 라벨
+        for i, v in enumerate(metrics_data["Value"]):
+            ax.text(v + 0.02, i, f"{v:.2f}", va="center", fontsize=10, fontweight="bold")
 
-        plt.tight_layout()
-        st.pyplot(fig5)
+        st.pyplot(fig)
 
     with c2:
         st.markdown(
             """
-#### 성능 지표 설명
-
-**AUC (0.92)**: 모델의 전반적인 분류 성능이 매우 우수함  
-
-**MCC (0.85)**: 불균형 데이터에서도 강건한 예측력  
-
-**Recall (0.89)**: 실제 고위험 환자의 89%를 정확히 포착  
-
-**Precision (0.91)**: 고위험으로 예측한 환자 중 91%가 실제 고위험  
-
-**F1-Score (0.90)**: Precision과 Recall의 균형잡힌 성능
+#### 성능 지표 설명  
+**AUC (0.92)** – 모델의 전반적 예측 성능 우수  
+**MCC (0.85)** – 불균형 데이터에서도 강건  
+**Recall (0.89)** – 실제 고위험 환자 89% 정확히 탐지  
+**Precision (0.91)** – 고위험으로 예측된 환자 중 91%가 실제 고위험  
+**F1-score (0.90)** – Precision·Recall 균형 우수
 """
         )
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    # ---------- Decile 분석 (그래프 섹션) ----------
+    # ========= Decile Analysis =========
+    st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown("### 📊 Decile Analysis Summary")
-    st.markdown(
-        "본 모델은 **독립 검증 데이터셋(TT3, n=214)**에서 뛰어난 성능을 입증했습니다."
-    )
+    st.markdown("본 모델은 **독립 검증 데이터셋(TT3, n=214)**에서 임상적 타당성을 입증했습니다.")
 
     c1, c2 = st.columns([2, 1])
 
     with c1:
-        decile_data = pd.DataFrame(
+        decile_df = pd.DataFrame(
             {
                 "Decile": list(range(1, 11)),
-                "Mortality_Rate": [0, 10, 20, 30, 45, 60, 72, 85, 93, 100],
+                "Mortality_Rate": [0, 8, 18, 28, 40, 55, 70, 85, 95, 100],
             }
         )
 
-        fig6, ax6 = plt.subplots(figsize=(10, 6))
-        ax6.plot(
-            decile_data["Decile"],
-            decile_data["Mortality_Rate"],
+        fig2, ax2 = plt.subplots(figsize=(10, 6))
+        ax2.plot(
+            decile_df["Decile"],
+            decile_df["Mortality_Rate"],
             marker="o",
             linewidth=3,
-            markersize=12,
+            markersize=10,
             color="#dc3545",
         )
-        ax6.fill_between(
-            decile_data["Decile"],
-            decile_data["Mortality_Rate"],
-            alpha=0.2,
-            color="#dc3545",
-        )
-        ax6.set_xlabel(
-            "Risk Decile (1=Lowest, 10=Highest)",
-            fontsize=12,
-            fontweight="bold",
-        )
-        ax6.set_ylabel(
-            "Mortality Rate (%)",
-            fontsize=12,
-            fontweight="bold",
-        )
-        ax6.set_title(
-            "Mortality Rate by Risk Decile",
-            fontsize=14,
-            fontweight="bold",
-            pad=20,
-        )
-        ax6.grid(True, alpha=0.3)
-        ax6.set_xticks(range(1, 11))
-        ax6.set_ylim(-5, 105)
-
-        plt.tight_layout()
-        st.pyplot(fig6)
+        ax2.fill_between(decile_df["Decile"], decile_df["Mortality_Rate"], alpha=0.2, color="#dc3545")
+        ax2.set_xlabel("Risk Decile (1 = Lowest Risk, 10 = Highest)", fontsize=12, fontweight="bold")
+        ax2.set_ylabel("Mortality Rate (%)", fontsize=12, fontweight="bold")
+        ax2.grid(True, alpha=0.3)
+        st.pyplot(fig2)
 
     with c2:
         st.markdown(
             """
-#### 주요 발견
+**Spearman Rho = 0.888 (p < 0.001)**  
 
-**Spearman's Rho = 0.888**  (p < 0.001)
+- 최저 위험군 1분위: **0% 사망률**  
+- 최고 위험군 10분위: **100% 사망률**  
 
-- 1분위: **0%** 사망률  
-- 10분위: **100%** 사망률  
-
-➡️ 예측 위험도와 실제 사망률 간 **강한 단조적 상관관계** 확인  
-
-이는 모델의 **임상적 타당성**을 입증합니다.
+➡️ 예측 위험도와 실제 사망률 간 **강한 단조적 상관관계**  
 """
         )
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    # ---------- Top 10 유전자 (그래프 섹션) ----------
+    # ========= Contributing Genes =========
+    st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown("### 🧬 Top 10 Contributing Genes")
 
     c1, c2 = st.columns([2, 1])
 
     with c1:
-        gene_importance = pd.DataFrame(
+        df_genes = pd.DataFrame(
             {
-                "Gene": [
-                    "SPARC",
-                    "C2orf74",
-                    "FAM105A",
-                    "AKR1C3",
-                    "EPS8L3",
-                    "IL2",
-                    "SNX2",
-                    "LOC100506125",
-                    "CD58",
-                    "ARHGEF37",
-                ],
-                "Importance": [
-                    0.12,
-                    0.10,
-                    0.09,
-                    0.08,
-                    0.08,
-                    0.07,
-                    0.07,
-                    0.06,
-                    0.06,
-                    0.05,
-                ],
-                "Known_Biomarker": [
-                    "Yes",
-                    "No",
-                    "No",
-                    "No",
-                    "No",
-                    "Yes",
-                    "No",
-                    "No",
-                    "Yes",
-                    "No",
-                ],
+                "Gene": ["SPARC", "C2orf74", "FAM105A", "AKR1C3", "EPS8L3", "IL2", "SNX2", "LOC100506125", "CD58", "ARHGEF37"],
+                "Importance": [0.12, 0.10, 0.09, 0.08, 0.08, 0.07, 0.07, 0.06, 0.06, 0.05],
+                "Known": ["Yes", "No", "No", "No", "No", "Yes", "No", "No", "Yes", "No"],
             }
         )
 
-        fig7, ax7 = plt.subplots(figsize=(10, 6))
-        colors_genes = [
-            "#dc3545" if x == "Yes" else "#3d7f7d"
-            for x in gene_importance["Known_Biomarker"]
-        ]
-        ax7.barh(
-            gene_importance["Gene"],
-            gene_importance["Importance"],
-            color=colors_genes,
-        )
-        ax7.set_xlabel("Feature Importance", fontsize=12, fontweight="bold")
-        ax7.set_title(
-            "Top 10 Contributing Genes",
-            fontsize=14,
-            fontweight="bold",
-            pad=20,
-        )
-        ax7.invert_yaxis()
-        ax7.grid(True, alpha=0.3, axis="x")
+        colors = ["#dc3545" if k == "Yes" else "#3d7f7d" for k in df_genes["Known"]]
 
-        for i, imp in enumerate(gene_importance["Importance"]):
-            ax7.text(
-                imp + 0.003,
-                i,
-                f"{imp:.3f}",
-                va="center",
-                fontsize=10,
-            )
+        fig3, ax3 = plt.subplots(figsize=(10, 6))
+        ax3.barh(df_genes["Gene"], df_genes["Importance"], color=colors)
+        ax3.set_xlabel("Feature Importance", fontsize=12, fontweight="bold")
+        ax3.invert_yaxis()
+        ax3.grid(True, alpha=0.3, axis="x")
 
-        legend_elements = [
-            Patch(facecolor="#dc3545", label="Known MM Biomarker"),
+        for i, imp in enumerate(df_genes["Importance"]):
+            ax3.text(imp + 0.003, i, f"{imp:.3f}", va="center", fontsize=10)
+
+        legend_items = [
+            Patch(facecolor="#dc3545", label="Known Biomarker"),
             Patch(facecolor="#3d7f7d", label="Other Gene"),
         ]
-        ax7.legend(handles=legend_elements, loc="lower right")
+        ax3.legend(handles=legend_items, loc="lower right")
 
-        plt.tight_layout()
-        st.pyplot(fig7)
+        st.pyplot(fig3)
 
     with c2:
         st.markdown(
             """
-#### Known Biomarkers
+#### Known Biomarkers  
+**SPARC** ⭐ – MM 바이오마커  
+**CD58** ⭐ – 면역 관련  
+**IL2** ⭐ – T세포 활성화  
 
-**SPARC** ⭐  
-- MM 바이오마커  
-- 세포외 기질 단백질  
-
-**CD58** ⭐  
-- 면역 조절 관련  
-- MM 예후 마커  
-
-**IL2** ⭐  
-- 면역 반응 관련  
-- T세포 활성화  
-
-➡️ 모델의 **생물학적 타당성** 확보
+➡️ 모델의 **생물학적 타당성** 확인  
 """
         )
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    # ---------- 고위험군의 중요성 (텍스트 카드) ----------
+    # ========= Why High-Risk Matters =========
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown("### ⚠️ Why High-Risk Patients Matter")
     st.markdown(
         """
-<div class="card">
-  <h3>⚠️ Why High-Risk Patients Matter</h3>
-  <p><b>고위험 환자 조기 식별</b>은 다발성 골수종 치료에서 매우 중요합니다:</p>
-  <p><b>1. 치료 강도 결정</b><br>
-     - 고위험 → 더 적극적인 초기 치료<br>
-     - 저위험 → 부작용 최소화한 표준 치료</p>
-  <p><b>2. 임상시험 참여</b><br>
-     - 고위험군 대상 신약 임상시험<br>
-     - 맞춤형 치료법 개발</p>
-  <p><b>3. 모니터링 주기</b><br>
-     - 고위험: 집중 추적 관찰<br>
-     - 저위험: 정기 검진</p>
-  <p><b>4. 예후 상담</b><br>
-     - 정확한 예후 정보 제공<br>
-     - 치료 계획 수립 지원</p>
-</div>
-""",
-        unsafe_allow_html=True,
-    )
+고위험 환자 조기 식별은 치료 전략에서 매우 중요합니다:
 
-    # ---------- 임상 활용 (배경색 카드 한 번에) ----------
+- **고위험 → 적극적 초기 치료 필요**  
+- **중위험 → 면밀한 관찰 필요**  
+- **저위험 → 표준 치료/모니터링으로 충분**  
+
+고위험 환자는 신약 임상시험 참여 가능성이 높으며,  
+예후 상담 및 치료 계획 수립에도 핵심 기준이 됩니다.
+"""
+    )
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # ========= Clinical Applications =========
+    st.markdown('<div class="card" style="background:#e8f4f3; border-left:4px solid #2d5f5d;">', unsafe_allow_html=True)
     st.markdown(
         """
-<div class="card" style="background:#e8f4f3; border-left:4px solid #2d5f5d;">
-  <h3>💡 Clinical Applications</h3>
-  <p>✅ <b>진단 시점 위험 평가</b> - 새로 진단된 MM 환자의 예후 예측</p>
-  <p>✅ <b>개인 맞춤형 치료</b> - 위험군별 차별화된 치료 프로토콜</p>
-  <p>✅ <b>임상 의사결정 지원</b> - 200개 유전자 기반 객관적 예측</p>
-  <p>✅ <b>정밀 종양학 실현</b> - 분자 수준의 환자 계층화</p>
-  <hr>
-  <p><b>⚠️ 중요</b>: 이 도구는 임상 의사결정을 <b>보조</b>하는 목적으로 개발되었으며,<br>
-     최종 치료 결정은 반드시 전문의의 종합적인 판단 하에 이루어져야 합니다.</p>
-</div>
-""",
-        unsafe_allow_html=True,
+### 💡 Clinical Applications
+
+✔️ **진단 시점 위험 평가**  
+✔️ **개인 맞춤형 치료 전략**  
+✔️ **임상 의사결정 지원**  
+✔️ **정밀 종양학 적용**  
+
+---
+⚠️ 최종 치료 결정은 반드시 전문의 판단 하에 이루어져야 합니다.
+"""
     )
+    st.markdown("</div>", unsafe_allow_html=True)
