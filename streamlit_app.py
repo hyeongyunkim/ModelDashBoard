@@ -4,130 +4,345 @@ import numpy as np
 import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
+from datetime import datetime
 
 # -------------------------------------------------------
 # 0. 기본 설정
 # -------------------------------------------------------
 st.set_page_config(
-    page_title="MM 예후 예측 대시보드",
-    layout="wide"
+    page_title="MM Risk Predictor",
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
+
+# 커스텀 CSS
+st.markdown("""
+<style>
+    /* 전체 배경 */
+    .main {
+        background-color: #f0f2f6;
+    }
+    
+    /* 헤더 스타일 */
+    .header-container {
+        background: linear-gradient(135deg, #2d5f5d 0%, #3d7f7d 100%);
+        padding: 2rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+        color: white;
+    }
+    
+    .header-title {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    /* 카드 스타일 */
+    .card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 1rem;
+    }
+    
+    .card-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #2d5f5d;
+    }
+    
+    /* 사이드바 스타일 */
+    .sidebar-card {
+        background: #e8f4f3;
+        padding: 1.5rem;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+    }
+    
+    /* 위험도 배지 */
+    .risk-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+    
+    .risk-very-low {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .risk-low {
+        background-color: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    .risk-medium {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    
+    .risk-high {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    
+    .risk-very-high {
+        background-color: #f5c6cb;
+        color: #721c24;
+    }
+    
+    /* 테이블 스타일 */
+    .patient-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .patient-table th {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: #2d5f5d;
+    }
+    
+    .patient-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    /* 통계 카드 */
+    .stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #2d5f5d;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-top: 0.5rem;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # -------------------------------------------------------
 # 1. 모델 + feature 리스트 로드
 # -------------------------------------------------------
 @st.cache_resource
 def load_model_and_features():
-    model = joblib.load("xgb_mm_model.pkl")
-    feature_cols = joblib.load("feature_cols.pkl")
+    try:
+        model = joblib.load("xgb_mm_model.pkl")
+        feature_cols = joblib.load("feature_cols.pkl")
+    except FileNotFoundError:
+        st.error("⚠️ 모델 파일(xgb_mm_model.pkl, feature_cols.pkl)이 없습니다!")
+        st.info("팀원이 만든 모델 파일을 업로드해주세요.")
+        return None, None
     return model, feature_cols
 
 model, feature_cols = load_model_and_features()
 
-st.title("🧬 Multiple Myeloma 예후 예측 대시보드 (XGBoost)")
+if model is None or feature_cols is None:
+    st.stop()
 
+# -------------------------------------------------------
+# 헤더
+# -------------------------------------------------------
 st.markdown("""
-### 📌 모델 설명  
-- 입력: **10개 샘플 유전자**  
-- 모델: **최종 XGBoost 생존 예측 모델**  
-- 유전자: 최종 선정된 feature 200개  
-- 목적: **사망 위험도(0~1)** 점수 + **Very Low ~ Very High 등급 분류**  
-""")
+<div class="header-container">
+    <div class="header-title">
+        🧬 MM Risk Predictor
+    </div>
+    <p style="margin: 0.5rem 0 0 0; opacity: 0.9;">Multiple Myeloma 예후 예측 시스템</p>
+</div>
+""", unsafe_allow_html=True)
 
 # -------------------------------------------------------
-# 2. 사용자 입력 구간
+# 2. 사이드바 - 환자 목록
 # -------------------------------------------------------
-st.sidebar.header("📥 입력 데이터 설정")
+st.sidebar.markdown("""
+<div style="text-align: center; padding: 1rem 0;">
+    <h2 style="margin: 0; color: #2d5f5d;">환자 목록</h2>
+</div>
+""", unsafe_allow_html=True)
 
-input_option = st.sidebar.radio(
-    "입력 방식 선택",
-    ["테스트용 샘플 보기", "CSV 업로드(사용자 입력)"]
-)
+# 검색 기능
+search_query = st.sidebar.text_input("🔍 검색...", "")
 
-# CSV 업로드 처리
-if input_option == "CSV 업로드(사용자 입력)":
-    uploaded = st.sidebar.file_uploader("CSV 파일 업로드", type=["csv"])
-    if uploaded is not None:
-        user_df = pd.read_csv(uploaded)
-        st.success("업로드 성공!")
-    else:
-        st.warning("CSV 파일을 업로드해주세요.")
-        user_df = None  # 업로드 전까지는 None
+# 환자 데이터 업로드
+uploaded = st.sidebar.file_uploader("📁 CSV 파일 업로드", type=["csv"])
+
+if uploaded is not None:
+    user_df = pd.read_csv(uploaded)
 else:
-    st.sidebar.info("샘플 데이터를 사용하려면 example_input.csv가 필요합니다.")
-    # user_df = pd.read_csv("example_input.csv")  # 주석 처리
-    user_df = None  # 샘플 파일이 없으면 None
+    user_df = None
+    st.sidebar.info("CSV 파일을 업로드해주세요.")
 
 # -------------------------------------------------------
-# 3. 입력 데이터 확인
+# 3. 메인 영역
 # -------------------------------------------------------
-st.subheader("📊 입력 데이터 미리보기")
 
 if user_df is not None:
-    st.dataframe(user_df.head())
-else:
-    st.info("데이터를 업로드하거나 선택해주세요.")
+    # 예측 함수 정의
+    from sklearn.preprocessing import StandardScaler
 
-# -------------------------------------------------------
-# 4. 예측 함수 정의
-# -------------------------------------------------------
-from sklearn.preprocessing import StandardScaler
-
-def run_prediction(df):
-    df = df.copy()
-
-    # 필요한 feature만 사용
-    df = df[feature_cols]
-
-    # 스케일링
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(df)
-
-    # 위험도 예측
-    risk = model.predict_proba(X_scaled)[:, 1]
-
-    # 위험도 구간 나누기
-    bins = ["Very Low", "Low", "Medium", "High", "Very High"]
-    df_result = pd.DataFrame({
-        "Risk_Score": risk,
-        "Pred_Group": pd.qcut(risk, 5, labels=bins)
-    })
-    return df_result
-
-# -------------------------------------------------------
-# 5. 예측 실행 버튼
-# -------------------------------------------------------
-st.subheader("🧪 예측 실행")
-
-if st.button("예측하기"):
-    if user_df is None:
-        st.error("먼저 데이터를 업로드해주세요!")
-    else:
-        try:
-            result_df = run_prediction(user_df)
-
-            st.success("예측 완료!")
-            st.write("### 🩸 예측 결과")
-            st.dataframe(result_df)
-
-            # -------------------------------------------------------
-            # 6. 시각화 (히스토그램 + 박스플롯)
-            # -------------------------------------------------------
-            st.markdown("### 📈 Risk Score Distribution")
-
-            fig1, ax1 = plt.subplots(figsize=(6,4))
-            sns.histplot(result_df["Risk_Score"], bins=20, kde=True, ax=ax1)
+    def run_prediction(df):
+        df = df.copy()
+        df = df[feature_cols]
+        scaler = StandardScaler()
+        X_scaled = scaler.fit_transform(df)
+        risk = model.predict_proba(X_scaled)[:, 1]
+        
+        def get_risk_group(score):
+            if score < 0.2:
+                return "초고위험"
+            elif score < 0.4:
+                return "고위험"
+            elif score < 0.6:
+                return "중간위험"
+            elif score < 0.8:
+                return "저위험"
+            else:
+                return "초저위험"
+        
+        df_result = pd.DataFrame({
+            "Patient_ID": [f"MM-2025-{str(i+1).zfill(3)}" for i in range(len(risk))],
+            "생존율": [f"{int(r*100)}%" for r in risk],
+            "위험군": [get_risk_group(r) for r in risk],
+            "Risk_Score": risk,
+            "최종_업데이트": [datetime.now().strftime("%Y-%m-%d") for _ in range(len(risk))]
+        })
+        return df_result
+    
+    # 예측 실행
+    result_df = run_prediction(user_df)
+    
+    # 탭 생성
+    tab1, tab2 = st.tabs(["📊 환자 목록", "📈 통계 분석"])
+    
+    with tab1:
+        col1, col2 = st.columns([2, 1])
+        
+        with col1:
+            st.markdown('<div class="card">', unsafe_allow_html=True)
+            st.markdown('<div class="card-title">최신 환자 목록</div>', unsafe_allow_html=True)
+            
+            # 정렬 옵션
+            sort_col1, sort_col2, sort_col3 = st.columns([1, 1, 2])
+            with sort_col1:
+                sort_option = st.selectbox("정렬:", ["최신순", "생존율", "위험군"])
+            
+            # 테이블 생성
+            for idx, row in result_df.head(10).iterrows():
+                risk_class = ""
+                if "초고위험" in row["위험군"]:
+                    risk_class = "risk-very-high"
+                elif "고위험" in row["위험군"]:
+                    risk_class = "risk-high"
+                elif "중간위험" in row["위험군"]:
+                    risk_class = "risk-medium"
+                elif "저위험" in row["위험군"]:
+                    risk_class = "risk-low"
+                else:
+                    risk_class = "risk-very-low"
+                
+                st.markdown(f"""
+                <div style="background: white; padding: 1rem; margin-bottom: 0.5rem; border-radius: 5px; border-left: 4px solid #2d5f5d;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div><strong>{row['Patient_ID']}</strong></div>
+                        <div><strong style="font-size: 1.2rem; color: #2d5f5d;">{row['생존율']}</strong></div>
+                        <div><span class="risk-badge {risk_class}">{row['위험군']}</span></div>
+                        <div style="color: #6c757d;">{row['최종_업데이트']}</div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            st.markdown('</div>', unsafe_allow_html=True)
+        
+        with col2:
+            # 통계 카드들
+            st.markdown('<div class="stat-card">', unsafe_allow_html=True)
+            st.markdown(f'<div class="stat-number">{len(result_df)}명</div>', unsafe_allow_html=True)
+            st.markdown('<div class="stat-label">총 환자</div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+            high_risk = len(result_df[result_df["위험군"].isin(["고위험", "초고위험"])])
+            st.markdown('<div class="stat-card" style="margin-top: 1rem;">', unsafe_allow_html=True)
+            st.markdown(f'<div class="stat-number" style="color: #dc3545;">{high_risk}명</div>', unsafe_allow_html=True)
+            st.markdown('<div class="stat-label">고위험군</div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+            avg_survival = int(result_df["Risk_Score"].mean() * 100)
+            st.markdown('<div class="stat-card" style="margin-top: 1rem;">', unsafe_allow_html=True)
+            st.markdown(f'<div class="stat-number" style="color: #28a745;">{avg_survival}%</div>', unsafe_allow_html=True)
+            st.markdown('<div class="stat-label">평균 생존율</div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+    
+    with tab2:
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.markdown('<div class="card-title">위험도 분포</div>', unsafe_allow_html=True)
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # 위험군별 분포 막대그래프
+            fig1, ax1 = plt.subplots(figsize=(8, 5))
+            risk_counts = result_df["위험군"].value_counts()
+            colors = ['#d4edda', '#fff3cd', '#ffc107', '#f8d7da', '#dc3545']
+            risk_counts.plot(kind='bar', ax=ax1, color=colors[:len(risk_counts)])
+            ax1.set_title('위험군별 환자 수', fontsize=14, fontweight='bold', pad=20)
+            ax1.set_xlabel('')
+            ax1.set_ylabel('환자 수', fontsize=11)
+            plt.xticks(rotation=45, ha='right')
+            plt.tight_layout()
             st.pyplot(fig1)
-
-            st.markdown("### 📊 Risk Group Boxplot")
-
-            fig2, ax2 = plt.subplots(figsize=(6,4))
-            sns.boxplot(x="Pred_Group", y="Risk_Score", data=result_df, ax=ax2)
+        
+        with col2:
+            # 생존율 분포 히스토그램
+            fig2, ax2 = plt.subplots(figsize=(8, 5))
+            ax2.hist(result_df["Risk_Score"] * 100, bins=20, color='#3d7f7d', edgecolor='white')
+            ax2.set_title('생존율 분포', fontsize=14, fontweight='bold', pad=20)
+            ax2.set_xlabel('생존율 (%)', fontsize=11)
+            ax2.set_ylabel('환자 수', fontsize=11)
+            plt.tight_layout()
             st.pyplot(fig2)
-
-        except Exception as e:
-            st.error(f"오류 발생: {e}")
-            st.info("⚠ 업로드한 CSV가 feature_cols.pkl의 구성과 맞는지 확인하세요.")
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        # 위험도 박스플롯
+        st.markdown('<div class="card" style="margin-top: 1rem;">', unsafe_allow_html=True)
+        st.markdown('<div class="card-title">위험군별 생존율 상세 분석</div>', unsafe_allow_html=True)
+        
+        fig3, ax3 = plt.subplots(figsize=(12, 5))
+        sns.boxplot(x="위험군", y="Risk_Score", data=result_df, ax=ax3, palette="Set2")
+        ax3.set_title('위험군별 생존율 분포', fontsize=14, fontweight='bold', pad=20)
+        ax3.set_xlabel('위험군', fontsize=11)
+        ax3.set_ylabel('생존율', fontsize=11)
+        plt.tight_layout()
+        st.pyplot(fig3)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
 
 else:
-    st.info("좌측에서 데이터를 선택하고 **예측하기** 버튼을 눌러주세요.")
+    # 데이터가 없을 때
+    st.markdown("""
+    <div class="card" style="text-align: center; padding: 3rem;">
+        <h3 style="color: #6c757d;">📁 CSV 파일을 업로드해주세요</h3>
+        <p style="color: #6c757d;">좌측 사이드바에서 환자 데이터 파일을 업로드하면<br>자동으로 예측 결과를 확인할 수 있습니다.</p>
+    </div>
+    """, unsafe_allow_html=True)
