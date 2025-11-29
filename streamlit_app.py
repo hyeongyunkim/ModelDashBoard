@@ -206,12 +206,38 @@ with tab1:
             # -------------------------------------------------------
             def run_prediction(df):
                 df = df.copy()
+
+                # 1️⃣ 샘플 CSV에 이미 Risk_Score / Risk_Group가 들어있는 경우 → 그대로 사용
+                if {"Risk_Score", "Risk_Group"}.issubset(df.columns):
+
+                    # Patient_ID가 있으면 그대로 쓰고, 없으면 MM-001 형태로 생성
+                    if "Patient_ID" in df.columns:
+                        patient_ids = df["Patient_ID"].astype(str).tolist()
+                    else:
+                        patient_ids = [f"MM-{str(i+1).zfill(3)}" for i in range(len(df))]
+
+                    result_df = pd.DataFrame({
+                        "Patient_ID": patient_ids,
+                        "Risk_Score": df["Risk_Score"].astype(float),
+                        "Risk_Group": df["Risk_Group"].astype(str)
+                    })
+
+                    # Survival_Rate 컬럼이 없으면 Risk_Score 기준으로 새로 계산
+                    if "Survival_Rate" in df.columns:
+                        result_df["Survival_Rate"] = df["Survival_Rate"].astype(float)
+                    else:
+                        # Risk_Score가 "사망 확률"이라고 가정 → 생존율 = (1 - risk) * 100
+                        result_df["Survival_Rate"] = (1 - result_df["Risk_Score"]) * 100
+
+                    return result_df
+
+                # 2️⃣ 일반 데이터 (리스크 정보가 없는 경우) → 모델로 예측
                 df = df[feature_cols]
                 
                 scaler = StandardScaler()
                 X_scaled = scaler.fit_transform(df)
                 
-                # Risk Score 계산
+                # Risk Score 계산 (사망 확률)
                 risk = model.predict_proba(X_scaled)[:, 1]
                 
                 # Risk Group 분류
@@ -231,7 +257,7 @@ with tab1:
                     "Patient_ID": [f"MM-{str(i+1).zfill(3)}" for i in range(len(risk))],
                     "Risk_Score": risk,
                     "Risk_Group": [get_risk_group(r) for r in risk],
-                    "Survival_Rate": [(1-r)*100 for r in risk]
+                    "Survival_Rate": [(1 - r) * 100 for r in risk]
                 })
                 return df_result
             
@@ -338,6 +364,7 @@ with tab1:
                 risk_counts = result_df["Risk_Group"].value_counts()
                 
                 # Risk Group 순서대로 정렬
+                risk_order = ["Very Low Risk", "Low Risk", "Medium Risk", "High Risk", "Very High Risk"]
                 risk_counts = risk_counts.reindex(risk_order, fill_value=0)
                 
                 colors_bar = ['#28a745', '#17a2b8', '#ffc107', '#fd7e14', '#dc3545']
@@ -373,6 +400,7 @@ with tab1:
                     "Very High Risk": '#dc3545'
                 }
                 
+                risk_order = ["Very Low Risk", "Low Risk", "Medium Risk", "High Risk", "Very High Risk"]
                 for risk_group in risk_order:
                     mask = result_df["Risk_Group"] == risk_group
                     ax4.scatter(result_df[mask].index, 
