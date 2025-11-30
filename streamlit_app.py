@@ -178,7 +178,8 @@ with tab1:
             )
 
             missing_features = set(feature_cols) - set(user_df.columns)
-            extra_features = set(user_df.columns) - set(feature_cols)
+            # extra_features는 따로 경고 띄우지 않고 조용히 무시
+            # extra_features = set(user_df.columns) - set(feature_cols)
 
             c1, c2, c3 = st.columns(3)
             with c1:
@@ -197,10 +198,11 @@ with tab1:
                     st.write(list(missing_features)[:10])
                 st.stop()
 
-            if extra_features:
-                st.warning(
-                    f"⚠️ Found {len(extra_features)} extra columns (will be ignored)"
-                )
+            # extra column 경고 제거 (그냥 무시)
+            # if extra_features:
+            #     st.warning(
+            #         f"⚠️ Found {len(extra_features)} extra columns (will be ignored)"
+            #     )
 
             st.success("✅ All required features found! Ready for prediction.")
 
@@ -235,7 +237,7 @@ with tab1:
                     return result_df
 
                 # 2) 일반 데이터 → 모델로 예측
-                df = df[feature_cols]
+                df = df[feature_cols]  # feature_cols만 사용 (나머지는 자동 무시)
 
                 scaler = StandardScaler()
                 X_scaled = scaler.fit_transform(df)
