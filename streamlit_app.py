@@ -178,8 +178,6 @@ with tab1:
             )
 
             missing_features = set(feature_cols) - set(user_df.columns)
-            # extra_features는 따로 경고 띄우지 않고 조용히 무시
-            # extra_features = set(user_df.columns) - set(feature_cols)
 
             c1, c2, c3 = st.columns(3)
             with c1:
@@ -198,19 +196,14 @@ with tab1:
                     st.write(list(missing_features)[:10])
                 st.stop()
 
-            # extra column 경고 제거 (그냥 무시)
-            # if extra_features:
-            #     st.warning(
-            #         f"⚠️ Found {len(extra_features)} extra columns (will be ignored)"
-            #     )
-
+            # extra column 경고는 아예 띄우지 않고, 그냥 feature_cols만 사용
             st.success("✅ All required features found! Ready for prediction.")
 
             # ---------------- 예측 함수 ----------------
             def run_prediction(df: pd.DataFrame) -> pd.DataFrame:
                 df = df.copy()
 
-                # 1) 이미 Risk_Score / Risk_Group가 있는 샘플 CSV
+                # 1) 이미 Risk_Score / Risk_Group가 있는 샘플 CSV인 경우
                 if {"Risk_Score", "Risk_Group"}.issubset(df.columns):
                     if "Patient_ID" in df.columns:
                         patient_ids = df["Patient_ID"].astype(str).tolist()
@@ -236,8 +229,8 @@ with tab1:
 
                     return result_df
 
-                # 2) 일반 데이터 → 모델로 예측
-                df = df[feature_cols]  # feature_cols만 사용 (나머지는 자동 무시)
+                # 2) 일반 유전자 데이터 → 모델로 예측
+                df = df[feature_cols]  # 필요한 200개 feature만 사용
 
                 scaler = StandardScaler()
                 X_scaled = scaler.fit_transform(df)
@@ -514,7 +507,7 @@ with tab1:
                 plt.tight_layout()
                 st.pyplot(fig3)
 
-            # 개별 환자 점 그래프
+            # 개별 환자 산점도
             with v4:
                 fig4, ax4 = plt.subplots(figsize=(8, 5))
                 color_map = {
